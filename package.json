@@ -1,0 +1,18 @@
+{
+  "name": "geoenergy-document-approval",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Document approval workflow: Engineers upload documents, Managers approve or reject them.",
+  "scripts": {
+    "postinstall": "cd server && npm install && cd ../client && npm install",
+    "build": "cd client && npm run build",
+    "start": "npm run build && cd server && npm start",
+    "dev": "concurrently -n server,client -c green,cyan \"cd server && npm run dev\" \"cd client && npm run dev\""
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
