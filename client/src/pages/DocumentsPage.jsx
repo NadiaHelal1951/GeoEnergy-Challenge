@@ -1,10 +1,11 @@
-// Main page: the document list with search.
+// Main page: summary counts, filters and the document list.
 // Engineers see their own documents and can upload; Managers see all and can approve/reject.
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../AuthContext';
 import { api, openDocumentFile } from '../api';
 import { formatDate } from '../format';
 import StatusBadge from '../components/StatusBadge';
+import SummaryCards from '../components/SummaryCards';
 import UploadForm from '../components/UploadForm';
 import RejectDialog from '../components/RejectDialog';
 
@@ -13,16 +14,28 @@ export default function DocumentsPage() {
   const isManager = user.role === 'Manager';
 
   const [documents, setDocuments] = useState([]);
+  const [summary, setSummary] = useState(null);
   const [options, setOptions] = useState(null);
-  const [search, setSearch] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
   const [rejecting, setRejecting] = useState(null); // the document being rejected, or null
 
+  // Filters
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('');
+  const [department, setDepartment] = useState('');
+  const hasFilters = search || status || department;
+
   const loadDocuments = useCallback(async () => {
     try {
-      const query = search ? `?search=${encodeURIComponent(search)}` : '';
+      // Only include the filters that are set, e.g. "?status=Approved&department=Exploration"
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      if (status) params.set('status', status);
+      if (department) params.set('department', department);
+      const query = params.toString() ? `?${params}` : '';
+
       const data = await api(`/documents${query}`);
       setDocuments(data.documents);
       setError('');
@@ -31,24 +44,46 @@ export default function DocumentsPage() {
     } finally {
       setLoading(false);
     }
-  }, [search]);
+  }, [search, status, department]);
 
-  // Reload the list when the search text changes, waiting 300 ms after the
+  const loadSummary = useCallback(async () => {
+    try {
+      const data = await api('/documents/summary');
+      setSummary(data.summary);
+    } catch (err) {
+      setError(err.message);
+    }
+  }, []);
+
+  // After an upload, approval or rejection, both the list and the counts change.
+  function refresh() {
+    loadDocuments();
+    loadSummary();
+  }
+
+  // Reload the list when a filter changes, waiting 300 ms after the
   // user stops typing so we don't send a request for every key press.
   useEffect(() => {
     const timer = setTimeout(loadDocuments, 300);
     return () => clearTimeout(timer);
   }, [loadDocuments]);
 
-  // Dropdown values for the upload form.
+  // Load the counts and the dropdown values once when the page opens.
   useEffect(() => {
+    loadSummary();
     api('/options').then(setOptions).catch((err) => setError(err.message));
-  }, []);
+  }, [loadSummary]);
+
+  function clearFilters() {
+    setSearch('');
+    setStatus('');
+    setDepartment('');
+  }
 
   async function approve(doc) {
     try {
       await api(`/documents/${doc.id}/approve`, { method: 'POST' });
-      loadDocuments();
+      refresh();
     } catch (err) {
       setError(err.message);
     }
@@ -57,7 +92,7 @@ export default function DocumentsPage() {
   async function reject(doc, comment) {
     await api(`/documents/${doc.id}/reject`, { method: 'POST', body: { comment } });
     setRejecting(null);
-    loadDocuments();
+    refresh();
   }
 
   async function viewFile(doc) {
@@ -82,18 +117,33 @@ export default function DocumentsPage() {
           options={options}
           defaultDepartment={user.department}
           onCancel={() => setShowUpload(false)}
-          onUploaded={() => { setShowUpload(false); loadDocuments(); }}
+          onUploaded={() => { setShowUpload(false); refresh(); }}
         />
       )}
 
+      <SummaryCards summary={summary} activeStatus={status} onSelect={setStatus} />
+
       <div className="card">
-        <input
-          className="search"
-          type="search"
-          placeholder="Search by title…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+        <div className="filters">
+          <input
+            className="search"
+            type="search"
+            placeholder="Search by title…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <select value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Filter by status">
+            <option value="">All statuses</option>
+            {options?.statuses.map((s) => <option key={s}>{s}</option>)}
+          </select>
+          <select value={department} onChange={(e) => setDepartment(e.target.value)} aria-label="Filter by department">
+            <option value="">All departments</option>
+            {options?.departments.map((d) => <option key={d}>{d}</option>)}
+          </select>
+          {hasFilters && (
+            <button className="secondary" onClick={clearFilters}>Clear filters</button>
+          )}
+        </div>
 
         {error && <p className="error">{error}</p>}
 
@@ -101,7 +151,7 @@ export default function DocumentsPage() {
           <p className="muted">Loading…</p>
         ) : documents.length === 0 ? (
           <p className="muted empty">
-            {search ? 'No documents match your search.' :
+            {hasFilters ? 'No documents match your filters.' :
              isManager ? 'No documents have been submitted yet.' :
              'You have not uploaded any documents yet.'}
           </p>

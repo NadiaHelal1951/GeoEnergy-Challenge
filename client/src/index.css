@@ -59,7 +59,23 @@ button.secondary { background: white; color: var(--primary); }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .actions { display: flex; justify-content: flex-end; gap: 8px; }
 
-.search { width: 100%; max-width: 360px; margin-bottom: 16px; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.search { flex: 1 1 220px; max-width: 360px; }
+
+/* summary cards */
+.summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+.summary-card {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  padding: 14px 18px; background: var(--card); color: var(--text);
+  border: 1px solid var(--border); border-left-width: 5px; border-radius: 8px; text-align: left;
+}
+.summary-card:hover { background: #f9fbfa; }
+.summary-card.pending  { border-left-color: #e0a800; }
+.summary-card.approved { border-left-color: var(--primary); }
+.summary-card.rejected { border-left-color: var(--danger); }
+.summary-card.active { box-shadow: 0 0 0 2px var(--primary); }
+.summary-count { font-size: 26px; font-weight: 700; }
+.summary-label { font-size: 13px; color: var(--muted); }
 .empty { padding: 24px 0; text-align: center; }
 
 .table-wrap { overflow-x: auto; }

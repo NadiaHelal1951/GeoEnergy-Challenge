@@ -1,6 +1,8 @@
 // All document routes. Every route requires login (requireAuth is applied in index.js).
 //
-//   GET  /api/documents              list (Engineer: own only, Manager: all) + ?search=
+//   GET  /api/documents              list (Engineer: own only, Manager: all)
+//                                    filters: ?search= &status= &department=
+//   GET  /api/documents/summary      number of documents per status
 //   POST /api/documents              upload a new document        (Engineer only)
 //   GET  /api/documents/:id/file     view/download the file       (owner or Manager)
 //   POST /api/documents/:id/approve  approve a pending document   (Manager only)
@@ -11,7 +13,7 @@ import fs from 'fs';
 import db from '../db.js';
 import { requireRole } from '../middleware/auth.js';
 import { upload, UPLOAD_DIR } from '../upload.js';
-import { DEPARTMENTS, DOC_TYPES } from '../constants.js';
+import { DEPARTMENTS, DOC_TYPES, STATUSES } from '../constants.js';
 
 const router = Router();
 
@@ -30,18 +32,42 @@ function addHistory(documentId, userId, action, comment = null) {
     .run(documentId, userId, action, comment);
 }
 
+// Engineers only see their own documents. This filter is applied on the server,
+// so an Engineer can't see other people's documents even by calling the API directly.
+// Returns the start of a WHERE clause that every list/summary query builds on.
+function visibleTo(user) {
+  return user.role === 'Engineer'
+    ? { conditions: ['d.owner_id = ?'], params: [user.id] }
+    : { conditions: [], params: [] };
+}
+
+function toWhere(conditions) {
+  return conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+}
+
+// ---------- summary (counts per status) ----------
+
+router.get('/summary', (req, res) => {
+  const { conditions, params } = visibleTo(req.user);
+  const rows = db.prepare(`
+    SELECT d.status, COUNT(*) AS count
+    FROM documents d
+    ${toWhere(conditions)}
+    GROUP BY d.status
+  `).all(...params);
+
+  // Start every status at 0 so statuses with no documents still appear.
+  const summary = Object.fromEntries(STATUSES.map((s) => [s, 0]));
+  for (const row of rows) summary[row.status] = row.count;
+
+  res.json({ summary });
+});
+
 // ---------- list ----------
 
+// Optional query parameters: ?search=  &status=  &department=
 router.get('/', (req, res) => {
-  const conditions = [];
-  const params = [];
-
-  // Engineers only see their own documents. This filter is applied on the server,
-  // so an Engineer can't see other people's documents even by calling the API directly.
-  if (req.user.role === 'Engineer') {
-    conditions.push('d.owner_id = ?');
-    params.push(req.user.id);
-  }
+  const { conditions, params } = visibleTo(req.user);
 
   const search = (req.query.search || '').trim();
   if (search) {
@@ -49,7 +75,17 @@ router.get('/', (req, res) => {
     params.push(`%${search}%`);
   }
 
-  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+  if (STATUSES.includes(req.query.status)) {
+    conditions.push('d.status = ?');
+    params.push(req.query.status);
+  }
+
+  if (DEPARTMENTS.includes(req.query.department)) {
+    conditions.push('d.department = ?');
+    params.push(req.query.department);
+  }
+
+  const where = toWhere(conditions);
   const documents = db.prepare(`
     SELECT d.id, d.title, d.department, d.doc_type, d.file_name, d.mime_type,
            d.status, d.manager_comment, d.created_at, d.updated_at,
