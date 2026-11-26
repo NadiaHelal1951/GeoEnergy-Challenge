@@ -26,7 +26,7 @@ export function requireAuth(req, res, next) {
 export function requireRole(role) {
   return (req, res, next) => {
     if (req.user.role !== role) {
-      return res.status(403).json({ error: `Only a ${role} can do this` });
+      return res.status(403).json({ error: `Only the ${role} role can do this` });
     }
     next();
   };

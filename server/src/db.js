@@ -6,7 +6,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DB_PATH = path.join(__dirname, '..', 'data.db');
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, '..', 'data.db');
 
 // Opening the file creates it automatically if it doesn't exist yet.
 const db = new Database(DB_PATH);

@@ -1,0 +1,45 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 690 >>
+stream
+BT /F1 18 Tf 60 770 Td (Geological Report - Block A \(Sample\)) Tj ET
+BT /F1 10 Tf 60 750 Td (SAMPLE DOCUMENT - invented data for testing only) Tj ET
+BT /F2 12 Tf 60 715 Td (Department: Exploration) Tj ET
+BT /F2 12 Tf 60 695 Td (Author: ahmed \(fictional\)) Tj ET
+BT /F2 12 Tf 60 675 Td () Tj ET
+BT /F2 12 Tf 60 655 Td (Summary: Surface mapping of the fictional Block A identified) Tj ET
+BT /F2 12 Tf 60 635 Td (sandstone and shale sequences of interest. Three outcrops were) Tj ET
+BT /F2 12 Tf 60 615 Td (sampled. Recommend a follow-up seismic survey.) Tj ET
+BT /F2 12 Tf 60 595 Td () Tj ET
+BT /F2 12 Tf 60 575 Td (Formation tops \(invented\): Sand-1 at 1,250 m, Shale-2 at 1,610 m) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+6 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000251 00000 n 
+0000000991 00000 n 
+0000001066 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+1134
+%%EOF
