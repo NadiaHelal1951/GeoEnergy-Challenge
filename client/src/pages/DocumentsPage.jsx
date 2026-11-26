@@ -9,6 +9,7 @@ import StatusBadge from '../components/StatusBadge';
 import SummaryCards from '../components/SummaryCards';
 import UploadForm from '../components/UploadForm';
 import RejectDialog from '../components/RejectDialog';
+import ResubmitDialog from '../components/ResubmitDialog';
 
 export default function DocumentsPage() {
   const { user } = useAuth();
@@ -22,6 +23,7 @@ export default function DocumentsPage() {
   const [showUpload, setShowUpload] = useState(false);
   const [rejecting, setRejecting] = useState(null); // the document being rejected, or null
   const [viewing, setViewing] = useState(null);     // the document whose details are open, or null
+  const [resubmitting, setResubmitting] = useState(null); // the rejected document being resubmitted, or null
 
   // Filters
   const [search, setSearch] = useState('');
@@ -184,6 +186,9 @@ export default function DocumentsPage() {
                           <button className="danger" onClick={() => setRejecting(doc)}>Reject</button>
                         </>
                       )}
+                      {!isManager && doc.status === 'Rejected' && (
+                        <button onClick={() => setResubmitting(doc)}>Resubmit</button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -194,6 +199,14 @@ export default function DocumentsPage() {
       </div>
 
       {viewing && <DocumentDetails document={viewing} onClose={() => setViewing(null)} />}
+
+      {resubmitting && (
+        <ResubmitDialog
+          document={resubmitting}
+          onCancel={() => setResubmitting(null)}
+          onResubmitted={() => { setResubmitting(null); refresh(); }}
+        />
+      )}
 
       {rejecting && (
         <RejectDialog

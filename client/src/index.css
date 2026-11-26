@@ -86,6 +86,9 @@ th { color: var(--muted); font-weight: 600; font-size: 13px; }
 .row-actions { display: flex; gap: 6px; justify-content: flex-end; }
 .row-actions button { padding: 5px 12px; font-size: 13px; }
 .comment { margin-top: 4px; font-size: 13px; color: var(--danger); }
+.rejection-box {
+  background: #fbe1de; color: #7a2219; border-radius: 6px; padding: 10px 12px; font-size: 14px;
+}
 
 button.link {
   background: none; color: var(--primary); padding: 0; text-align: left;

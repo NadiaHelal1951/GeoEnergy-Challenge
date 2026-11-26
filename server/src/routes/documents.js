@@ -6,6 +6,7 @@
 //   POST /api/documents              upload a new document        (Engineer only)
 //   GET  /api/documents/:id/file     view/download the file       (owner or Manager)
 //   GET  /api/documents/:id/history  who did what and when        (owner or Manager)
+//   POST /api/documents/:id/resubmit upload a corrected file      (owner Engineer, if Rejected)
 //   POST /api/documents/:id/approve  approve a pending document   (Manager only)
 //   POST /api/documents/:id/reject   reject with a comment        (Manager only)
 import { Router } from 'express';
@@ -161,6 +162,41 @@ router.get('/:id/history', (req, res) => {
   `).all(doc.id);
 
   res.json({ history });
+});
+
+// ---------- resubmit (Engineer, own rejected documents only) ----------
+
+// The Engineer uploads a corrected file; the document goes back to "Pending Approval".
+// An optional note tells the Manager what was changed.
+router.post('/:id/resubmit', requireRole('Engineer'), upload.single('file'), (req, res) => {
+  const doc = findDocument(req.params.id);
+
+  const error =
+    !doc || doc.owner_id !== req.user.id ? { status: 404, message: 'Document not found' } :
+    doc.status !== 'Rejected' ? { status: 409, message: 'Only rejected documents can be resubmitted' } :
+    !req.file ? { status: 400, message: 'Please choose the corrected file' } :
+    null;
+
+  if (error) {
+    if (req.file) fs.unlinkSync(req.file.path); // don't keep the uploaded file
+    return res.status(error.status).json({ error: error.message });
+  }
+
+  const note = (req.body.note || '').trim();
+
+  db.prepare(`
+    UPDATE documents
+    SET file_name = ?, file_path = ?, mime_type = ?,
+        status = 'Pending Approval', manager_comment = NULL, updated_at = datetime('now')
+    WHERE id = ?
+  `).run(req.file.originalname, req.file.filename, req.file.mimetype, doc.id);
+
+  addHistory(doc.id, req.user.id, 'Resubmitted', note || null);
+
+  // The old file is no longer used by any document, so remove it from the uploads folder.
+  fs.rm(path.join(UPLOAD_DIR, doc.file_path), { force: true }, () => {});
+
+  res.json({ document: findDocument(doc.id) });
 });
 
 // ---------- approve / reject (Manager only) ----------
