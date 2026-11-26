@@ -5,6 +5,7 @@
 //   GET  /api/documents/summary      number of documents per status
 //   POST /api/documents              upload a new document        (Engineer only)
 //   GET  /api/documents/:id/file     view/download the file       (owner or Manager)
+//   GET  /api/documents/:id/history  who did what and when        (owner or Manager)
 //   POST /api/documents/:id/approve  approve a pending document   (Manager only)
 //   POST /api/documents/:id/reject   reject with a comment        (Manager only)
 import { Router } from 'express';
@@ -140,6 +141,26 @@ router.get('/:id/file', (req, res) => {
   // "inline" asks the browser to display the file instead of downloading it.
   res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(doc.file_name)}"`);
   res.sendFile(path.join(UPLOAD_DIR, doc.file_path));
+});
+
+// ---------- history ----------
+
+router.get('/:id/history', (req, res) => {
+  const doc = findDocument(req.params.id);
+  if (!doc || !canSee(req.user, doc)) {
+    return res.status(404).json({ error: 'Document not found' });
+  }
+
+  // JOIN users so we can show "mona (Manager)" instead of just a user id.
+  const history = db.prepare(`
+    SELECT h.id, h.action, h.comment, h.created_at, u.username, u.role
+    FROM history h
+    JOIN users u ON u.id = h.user_id
+    WHERE h.document_id = ?
+    ORDER BY h.created_at, h.id
+  `).all(doc.id);
+
+  res.json({ history });
 });
 
 // ---------- approve / reject (Manager only) ----------

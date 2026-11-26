@@ -2,8 +2,9 @@
 // Engineers see their own documents and can upload; Managers see all and can approve/reject.
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../AuthContext';
-import { api, openDocumentFile } from '../api';
+import { api } from '../api';
 import { formatDate } from '../format';
+import DocumentDetails from '../components/DocumentDetails';
 import StatusBadge from '../components/StatusBadge';
 import SummaryCards from '../components/SummaryCards';
 import UploadForm from '../components/UploadForm';
@@ -20,6 +21,7 @@ export default function DocumentsPage() {
   const [loading, setLoading] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
   const [rejecting, setRejecting] = useState(null); // the document being rejected, or null
+  const [viewing, setViewing] = useState(null);     // the document whose details are open, or null
 
   // Filters
   const [search, setSearch] = useState('');
@@ -95,14 +97,6 @@ export default function DocumentsPage() {
     refresh();
   }
 
-  async function viewFile(doc) {
-    try {
-      await openDocumentFile(doc.id);
-    } catch (err) {
-      setError(err.message);
-    }
-  }
-
   return (
     <>
       <div className="page-header">
@@ -173,7 +167,7 @@ export default function DocumentsPage() {
                 {documents.map((doc) => (
                   <tr key={doc.id}>
                     <td>
-                      <button className="link" onClick={() => viewFile(doc)}>{doc.title}</button>
+                      <button className="link" onClick={() => setViewing(doc)}>{doc.title}</button>
                       {doc.status === 'Rejected' && doc.manager_comment && (
                         <div className="comment">Rejection reason: {doc.manager_comment}</div>
                       )}
@@ -198,6 +192,8 @@ export default function DocumentsPage() {
           </div>
         )}
       </div>
+
+      {viewing && <DocumentDetails document={viewing} onClose={() => setViewing(null)} />}
 
       {rejecting && (
         <RejectDialog
