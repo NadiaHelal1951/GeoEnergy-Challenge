@@ -112,7 +112,13 @@ button.secondary:hover { background: #eef3f1; }
 .dialog { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 14px; }
 .dialog h3 { margin: 0; }
 .dialog h4 { margin: 4px 0 0; }
-.dialog.wide { max-width: 640px; max-height: 90vh; overflow-y: auto; }
+.dialog.wide { max-width: 760px; max-height: 92vh; overflow-y: auto; }
+
+/* file preview */
+.preview { width: 100%; height: 420px; border: 1px solid var(--border); border-radius: 6px; background: #fafbfc; }
+.preview.loading { display: grid; place-items: center; }
+.preview.image { height: auto; max-height: 480px; display: flex; justify-content: center; overflow: auto; }
+.preview.image img { max-height: 470px; object-fit: contain; }
 .dialog-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 button.icon {
   background: none; color: var(--muted); font-size: 24px; line-height: 1; padding: 0 4px;

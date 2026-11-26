@@ -1,7 +1,8 @@
-// Pop-up showing one document: its details, a button to open the file, and its history.
+// Pop-up showing one document: its details, a preview of the file, and its history.
 import { useEffect, useState } from 'react';
 import { api, openDocumentFile } from '../api';
 import { formatDate } from '../format';
+import FilePreview from './FilePreview';
 import StatusBadge from './StatusBadge';
 
 export default function DocumentDetails({ document, onClose }) {
@@ -39,9 +40,12 @@ export default function DocumentDetails({ document, onClose }) {
           <dt>Submitted on</dt> <dd>{formatDate(document.created_at)}</dd>
           <dt>File</dt>
           <dd>
-            <button className="link" onClick={openFile}>{document.file_name}</button>
+            {document.file_name}{' '}
+            <button className="link" onClick={openFile}>(open in new tab)</button>
           </dd>
         </dl>
+
+        <FilePreview document={document} />
 
         <h4>History</h4>
         {error && <p className="error">{error}</p>}

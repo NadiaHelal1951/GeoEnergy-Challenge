@@ -38,16 +38,27 @@ export async function api(path, options = {}) {
   return data;
 }
 
-// Files need the token too, so we can't use a plain <a href>. Instead we download
-// the file with fetch and open it in a new tab from memory (a "blob" URL).
-export async function openDocumentFile(id) {
-  const tab = window.open('', '_blank'); // open the tab now, before the await, so popup blockers allow it
+// Files need the token too, so we can't use a plain <a href> or <img src>.
+// Instead we download the file with fetch and give the browser a temporary
+// in-memory address for it (a "blob" URL like blob:http://localhost:5173/abc...).
+// Call URL.revokeObjectURL(url) when it's no longer needed to free the memory.
+export async function fetchDocumentFileUrl(id) {
   const res = await fetch(`/api/documents/${id}/file`, { headers: authHeaders() });
   if (!res.ok) {
-    tab?.close();
     handleExpiredSession(res, '');
-    throw new Error('Could not open the file');
+    throw new Error('Could not load the file');
   }
   const blob = await res.blob();
-  tab.location.href = URL.createObjectURL(blob);
+  return URL.createObjectURL(blob);
+}
+
+// Opens the file in a new browser tab.
+export async function openDocumentFile(id) {
+  const tab = window.open('', '_blank'); // open the tab now, before the await, so popup blockers allow it
+  try {
+    tab.location.href = await fetchDocumentFileUrl(id);
+  } catch (err) {
+    tab?.close();
+    throw err;
+  }
 }
