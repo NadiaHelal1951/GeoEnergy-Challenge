@@ -1,6 +1,6 @@
 // Pop-up showing one document: its details, a preview of the file, and its history.
 import { useEffect, useState } from 'react';
-import { api, openDocumentFile } from '../api';
+import { api, fetchDocumentFileUrl } from '../api';
 import { formatDate } from '../format';
 import FilePreview from './FilePreview';
 import StatusBadge from './StatusBadge';
@@ -8,6 +8,8 @@ import StatusBadge from './StatusBadge';
 export default function DocumentDetails({ document, onClose }) {
   const [history, setHistory] = useState(null);
   const [error, setError] = useState('');
+  const [fileUrl, setFileUrl] = useState(null);
+  const [fileError, setFileError] = useState('');
 
   // Load the history whenever a different document is opened.
   useEffect(() => {
@@ -16,13 +18,24 @@ export default function DocumentDetails({ document, onClose }) {
       .catch((err) => setError(err.message));
   }, [document.id]);
 
-  async function openFile() {
-    try {
-      await openDocumentFile(document.id);
-    } catch (err) {
-      setError(err.message);
-    }
-  }
+  // Download the file once; both the preview and the "open in new tab" link use it.
+  useEffect(() => {
+    let url = null;
+    let cancelled = false; // stops us updating state if the dialog was closed while loading
+
+    fetchDocumentFileUrl(document.id)
+      .then((u) => {
+        url = u;
+        if (!cancelled) setFileUrl(u);
+      })
+      .catch((err) => !cancelled && setFileError(err.message));
+
+    // Clean-up when the dialog closes: free the memory used by the file.
+    return () => {
+      cancelled = true;
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [document.id]);
 
   return (
     <div className="overlay" onClick={onClose}>
@@ -41,11 +54,14 @@ export default function DocumentDetails({ document, onClose }) {
           <dt>File</dt>
           <dd>
             {document.file_name}{' '}
-            <button className="link" onClick={openFile}>(open in new tab)</button>
+            {fileUrl && (
+              // A normal link to the already-downloaded file; the browser opens it in a new tab.
+              <a href={fileUrl} target="_blank" rel="noopener noreferrer">(open in new tab)</a>
+            )}
           </dd>
         </dl>
 
-        <FilePreview document={document} />
+        <FilePreview document={document} url={fileUrl} error={fileError} />
 
         <h4>History</h4>
         {error && <p className="error">{error}</p>}

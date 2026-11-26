@@ -51,14 +51,3 @@ export async function fetchDocumentFileUrl(id) {
   const blob = await res.blob();
   return URL.createObjectURL(blob);
 }
-
-// Opens the file in a new browser tab.
-export async function openDocumentFile(id) {
-  const tab = window.open('', '_blank'); // open the tab now, before the await, so popup blockers allow it
-  try {
-    tab.location.href = await fetchDocumentFileUrl(id);
-  } catch (err) {
-    tab?.close();
-    throw err;
-  }
-}
