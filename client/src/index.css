@@ -80,7 +80,7 @@ button.secondary { background: white; color: var(--primary); }
 
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
-th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
 th { color: var(--muted); font-weight: 600; font-size: 13px; }
 .nowrap { white-space: nowrap; }
 .row-actions { display: flex; gap: 6px; justify-content: flex-end; }

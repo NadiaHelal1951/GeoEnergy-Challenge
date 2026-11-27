@@ -179,16 +179,18 @@ export default function DocumentsPage() {
                     {isManager && <td>{doc.owner}</td>}
                     <td className="nowrap">{formatDate(doc.created_at)}</td>
                     <td><StatusBadge status={doc.status} /></td>
-                    <td className="row-actions">
-                      {isManager && doc.status === 'Pending Approval' && (
-                        <>
-                          <button onClick={() => approve(doc)}>Approve</button>
-                          <button className="danger" onClick={() => setRejecting(doc)}>Reject</button>
-                        </>
-                      )}
-                      {!isManager && doc.status === 'Rejected' && (
-                        <button onClick={() => setResubmitting(doc)}>Resubmit</button>
-                      )}
+                    <td>
+                      <div className="row-actions">
+                        {isManager && doc.status === 'Pending Approval' && (
+                          <>
+                            <button onClick={() => approve(doc)}>Approve</button>
+                            <button className="danger" onClick={() => setRejecting(doc)}>Reject</button>
+                          </>
+                        )}
+                        {!isManager && doc.status === 'Rejected' && (
+                          <button onClick={() => setResubmitting(doc)}>Resubmit</button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
