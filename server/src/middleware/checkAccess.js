@@ -4,7 +4,10 @@
 //              so hiding a button in the UI is not the only protection).
 import jwt from 'jsonwebtoken';
 
-export const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
+// The server's secret for signing (login.js) and checking (requireAuth) tokens.
+// Uses the JWT_SECRET environment variable if one is set; otherwise this development
+// default. In production, always set a long random JWT_SECRET instead.
+export const JWT_SECRET = process.env.JWT_SECRET || 'my-geoenergy-secret';
 
 export function requireAuth(req, res, next) {
   // The client sends: Authorization: Bearer <token>
