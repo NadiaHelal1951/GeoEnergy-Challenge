@@ -2,7 +2,7 @@
 //
 //   GET  /api/documents              list (Engineer: own only, Manager: all)
 //                                    filters: ?search= &status= &department=
-//   GET  /api/documents/summary      number of documents per status
+//   GET  /api/documents/status-counts  number of documents per status
 //   POST /api/documents              upload a new document        (Engineer only)
 //   GET  /api/documents/:id/file     view/download the file       (owner or Manager)
 //   GET  /api/documents/:id/history  who did what and when        (owner or Manager)
@@ -52,7 +52,7 @@ function refuseUpload(req, res, status, message) {
 
 // Engineers only see their own documents. This filter is applied on the server,
 // so an Engineer can't see other people's documents even by calling the API directly.
-// Returns the start of a WHERE clause that every list/summary query builds on.
+// Returns the start of a WHERE clause that the list and status-count queries build on.
 function visibleTo(user) {
   return user.role === 'Engineer'
     ? { conditions: ['d.owner_id = ?'], params: [user.id] }
@@ -63,9 +63,11 @@ function toWhere(conditions) {
   return conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
 }
 
-// ---------- summary (counts per status) ----------
+// ---------- status counts (for the summary cards) ----------
 
-router.get('/summary', (req, res) => {
+// Returns how many documents have each status, e.g.
+// { "Pending Approval": 2, "Approved": 1, "Rejected": 1 }
+router.get('/status-counts', (req, res) => {
   const { conditions, params } = visibleTo(req.user);
   const rows = db.prepare(`
     SELECT d.status, COUNT(*) AS count
@@ -75,10 +77,10 @@ router.get('/summary', (req, res) => {
   `).all(...params);
 
   // Start every status at 0 so statuses with no documents still appear.
-  const summary = Object.fromEntries(STATUSES.map((s) => [s, 0]));
-  for (const row of rows) summary[row.status] = row.count;
+  const statusCounts = Object.fromEntries(STATUSES.map((s) => [s, 0]));
+  for (const row of rows) statusCounts[row.status] = row.count;
 
-  res.json({ summary });
+  res.json({ statusCounts });
 });
 
 // ---------- list ----------

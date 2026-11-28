@@ -83,7 +83,7 @@ The screen hides buttons a user can't use, but **every rule is also enforced by 
 |---|---|
 | Only Managers approve/reject | `requireRole('Manager')` on the approve and reject routes |
 | Only Engineers upload/resubmit | `requireRole('Engineer')` on the upload and resubmit routes |
-| Engineers only see their own documents | `WHERE owner_id = ?` in the list and summary queries |
+| Engineers only see their own documents | `WHERE owner_id = ?` in the list and status-count queries |
 | Files and history are private to the owner and Managers | `canSee()` check — other users get "not found" |
 | Rejection needs a comment; only pending documents can be decided | Validated in the route before the database is changed |
 | Only PDF and image files up to 10 MB | Checked by the upload middleware |
@@ -118,7 +118,7 @@ GeoEnergy-Challenge/
 │   │   │   └── auth.js       requireAuth (valid token) and requireRole (Engineer/Manager)
 │   │   └── routes/
 │   │       ├── auth.js       POST /api/auth/login
-│   │       └── documents.js  list, summary, upload, file, history, resubmit, approve, reject
+│   │       └── documents.js  list, status counts, upload, file, history, resubmit, approve, reject
 │   ├── data.db               the database (created on first run, not in git)
 │   └── uploads/              uploaded files (created on first run, not in git)
 └── client/
@@ -180,7 +180,7 @@ All routes except login require `Authorization: Bearer <token>`.
 | POST | `/api/auth/login` | anyone | Returns a token and the user |
 | GET | `/api/options` | logged in | Departments, document types, statuses |
 | GET | `/api/documents?search=&status=&department=` | logged in | List (Engineers: own only) |
-| GET | `/api/documents/summary` | logged in | Count per status |
+| GET | `/api/documents/status-counts` | logged in | Number of documents per status (Engineers: own only) |
 | POST | `/api/documents` | Engineer | Upload (multipart: `file`, `title`, `department`, `doc_type`) |
 | GET | `/api/documents/:id/file` | owner or Manager | The file, shown inline |
 | GET | `/api/documents/:id/history` | owner or Manager | Who did what and when |

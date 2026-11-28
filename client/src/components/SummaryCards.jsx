@@ -6,7 +6,8 @@ const CARDS = [
   { status: 'Rejected', label: 'Rejected', className: 'rejected' },
 ];
 
-export default function SummaryCards({ summary, activeStatus, onSelect }) {
+// statusCounts comes from GET /api/documents/status-counts, e.g. { "Approved": 3, ... }
+export default function SummaryCards({ statusCounts, activeStatus, onSelect }) {
   return (
     <div className="summary">
       {CARDS.map(({ status, label, className }) => (
@@ -15,7 +16,7 @@ export default function SummaryCards({ summary, activeStatus, onSelect }) {
           className={`summary-card ${className} ${activeStatus === status ? 'active' : ''}`}
           onClick={() => onSelect(activeStatus === status ? '' : status)}
         >
-          <span className="summary-count">{summary ? summary[status] : '–'}</span>
+          <span className="summary-count">{statusCounts ? statusCounts[status] : '–'}</span>
           <span className="summary-label">{label}</span>
         </button>
       ))}

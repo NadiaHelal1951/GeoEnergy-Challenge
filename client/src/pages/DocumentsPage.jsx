@@ -1,4 +1,4 @@
-// Main page: summary counts, filters and the document list.
+// Main page: summary cards (status counts), filters and the document list.
 // Engineers see their own documents and can upload; Managers see all and can approve/reject.
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../AuthContext';
@@ -16,7 +16,7 @@ export default function DocumentsPage() {
   const isManager = user.role === 'Manager';
 
   const [documents, setDocuments] = useState([]);
-  const [summary, setSummary] = useState(null);
+  const [statusCounts, setStatusCounts] = useState(null); // e.g. { Approved: 3, ... }
   const [options, setOptions] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -50,10 +50,10 @@ export default function DocumentsPage() {
     }
   }, [search, status, department]);
 
-  const loadSummary = useCallback(async () => {
+  const loadStatusCounts = useCallback(async () => {
     try {
-      const data = await api('/documents/summary');
-      setSummary(data.summary);
+      const data = await api('/documents/status-counts');
+      setStatusCounts(data.statusCounts);
     } catch (err) {
       setError(err.message);
     }
@@ -62,7 +62,7 @@ export default function DocumentsPage() {
   // After an upload, approval or rejection, both the list and the counts change.
   function refresh() {
     loadDocuments();
-    loadSummary();
+    loadStatusCounts();
   }
 
   // Reload the list when a filter changes, waiting 300 ms after the
@@ -74,9 +74,9 @@ export default function DocumentsPage() {
 
   // Load the counts and the dropdown values once when the page opens.
   useEffect(() => {
-    loadSummary();
+    loadStatusCounts();
     api('/options').then(setOptions).catch((err) => setError(err.message));
-  }, [loadSummary]);
+  }, [loadStatusCounts]);
 
   function clearFilters() {
     setSearch('');
@@ -117,7 +117,7 @@ export default function DocumentsPage() {
         />
       )}
 
-      <SummaryCards summary={summary} activeStatus={status} onSelect={setStatus} />
+      <SummaryCards statusCounts={statusCounts} activeStatus={status} onSelect={setStatus} />
 
       <div className="card">
         <div className="filters">
