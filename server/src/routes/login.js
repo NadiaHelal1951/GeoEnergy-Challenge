@@ -3,7 +3,7 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import db from '../db.js';
-import { JWT_SECRET } from '../middleware/checkLogin.js';
+import { JWT_SECRET } from '../middleware/checkAccess.js';
 
 const router = Router();
 

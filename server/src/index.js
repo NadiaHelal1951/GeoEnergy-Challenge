@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 import './db.js'; // opens the database and seeds users on first run
 import loginRoutes from './routes/login.js';
 import documentRoutes from './routes/documents.js';
-import { requireAuth } from './middleware/checkLogin.js';
+import { requireAuth } from './middleware/checkAccess.js';
 import { DEPARTMENTS, DOC_TYPES, STATUSES } from './constants.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

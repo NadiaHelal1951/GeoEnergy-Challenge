@@ -115,7 +115,7 @@ GeoEnergy-Challenge/
 │   │   ├── constants.js      departments, document types, statuses, allowed file types
 │   │   ├── upload.js         multer configuration (where and how files are saved)
 │   │   ├── middleware/
-│   │   │   └── checkLogin.js   requireAuth (valid token) and requireRole (Engineer/Manager)
+│   │   │   └── checkAccess.js  requireAuth (valid token) and requireRole (Engineer/Manager)
 │   │   └── routes/
 │   │       ├── login.js      POST /api/auth/login
 │   │       └── documents.js  list, status counts, upload, file, history, resubmit, approve, reject
