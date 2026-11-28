@@ -1,11 +1,8 @@
 // Small wrapper around fetch: adds the login token and turns errors into exceptions.
 
-export function getToken() {
-  return localStorage.getItem('token');
-}
-
+// Reads the token saved at login and puts it in the Authorization header.
 function authHeaders() {
-  const token = getToken();
+  const token = localStorage.getItem('token');
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 

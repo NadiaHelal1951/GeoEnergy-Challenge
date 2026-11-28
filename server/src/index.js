@@ -25,10 +25,6 @@ app.use('/api/auth', loginRouter);
 // Everything below requires a valid login token.
 app.use('/api', requireAuth);
 
-app.get('/api/me', (req, res) => {
-  res.json({ user: req.user });
-});
-
 // Dropdown values for the client.
 app.get('/api/options', (req, res) => {
   res.json({ departments: DEPARTMENTS, docTypes: DOC_TYPES, statuses: STATUSES });
