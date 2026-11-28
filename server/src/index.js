@@ -4,9 +4,9 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import './db.js'; // opens the database and seeds users on first run
-import authRoutes from './routes/auth.js';
+import loginRoutes from './routes/login.js';
 import documentRoutes from './routes/documents.js';
-import { requireAuth } from './middleware/auth.js';
+import { requireAuth } from './middleware/checkLogin.js';
 import { DEPARTMENTS, DOC_TYPES, STATUSES } from './constants.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -19,7 +19,8 @@ app.use(express.json()); // lets us read JSON bodies as req.body
 
 // ---------- API ----------
 
-app.use('/api/auth', authRoutes);
+// Login must come BEFORE requireAuth: you can't have a token yet when you're logging in.
+app.use('/api/auth', loginRoutes);
 
 // Everything below requires a valid login token.
 app.use('/api', requireAuth);

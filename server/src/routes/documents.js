@@ -13,7 +13,7 @@ import { Router } from 'express';
 import path from 'path';
 import fs from 'fs';
 import db from '../db.js';
-import { requireRole } from '../middleware/auth.js';
+import { requireRole } from '../middleware/checkLogin.js';
 import { upload, UPLOAD_DIR } from '../upload.js';
 import { DEPARTMENTS, DOC_TYPES, STATUSES } from '../constants.js';
 
