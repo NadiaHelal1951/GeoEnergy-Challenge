@@ -1,6 +1,5 @@
 // Entry point: creates the Express app, registers routes, and starts listening.
 import express from 'express';
-import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -16,7 +15,6 @@ const CLIENT_DIST = path.join(__dirname, '..', '..', 'client', 'dist');
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(cors());
 app.use(express.json()); // lets us read JSON bodies as req.body
 
 // ---------- API ----------

@@ -34,6 +34,22 @@ function addHistory(documentId, userId, action, comment = null) {
     .run(documentId, userId, action, comment);
 }
 
+// Used by approve and reject: changes the status and the manager's comment.
+function setStatus(documentId, status, managerComment) {
+  db.prepare(`
+    UPDATE documents
+    SET status = ?, manager_comment = ?, updated_at = datetime('now')
+    WHERE id = ?
+  `).run(status, managerComment, documentId);
+}
+
+// Sends an error for an upload we won't accept. Multer has already saved the
+// file to the uploads folder by this point, so we delete it to avoid leftovers.
+function refuseUpload(req, res, status, message) {
+  if (req.file) fs.unlinkSync(req.file.path);
+  return res.status(status).json({ error: message });
+}
+
 // Engineers only see their own documents. This filter is applied on the server,
 // so an Engineer can't see other people's documents even by calling the API directly.
 // Returns the start of a WHERE clause that every list/summary query builds on.
@@ -108,16 +124,17 @@ router.get('/', (req, res) => {
 router.post('/', requireRole('Engineer'), upload.single('file'), (req, res) => {
   const { title, department, doc_type } = req.body;
 
-  const error =
-    !req.file ? 'Please choose a file' :
-    !title?.trim() ? 'Title is required' :
-    !DEPARTMENTS.includes(department) ? 'Please choose a valid department' :
-    !DOC_TYPES.includes(doc_type) ? 'Please choose a valid document type' :
-    null;
-
-  if (error) {
-    if (req.file) fs.unlinkSync(req.file.path); // don't keep files for rejected uploads
-    return res.status(400).json({ error });
+  if (!req.file) {
+    return refuseUpload(req, res, 400, 'Please choose a file');
+  }
+  if (!title || !title.trim()) {
+    return refuseUpload(req, res, 400, 'Title is required');
+  }
+  if (!DEPARTMENTS.includes(department)) {
+    return refuseUpload(req, res, 400, 'Please choose a valid department');
+  }
+  if (!DOC_TYPES.includes(doc_type)) {
+    return refuseUpload(req, res, 400, 'Please choose a valid document type');
   }
 
   const result = db.prepare(`
@@ -171,15 +188,14 @@ router.get('/:id/history', (req, res) => {
 router.post('/:id/resubmit', requireRole('Engineer'), upload.single('file'), (req, res) => {
   const doc = findDocument(req.params.id);
 
-  const error =
-    !doc || doc.owner_id !== req.user.id ? { status: 404, message: 'Document not found' } :
-    doc.status !== 'Rejected' ? { status: 409, message: 'Only rejected documents can be resubmitted' } :
-    !req.file ? { status: 400, message: 'Please choose the corrected file' } :
-    null;
-
-  if (error) {
-    if (req.file) fs.unlinkSync(req.file.path); // don't keep the uploaded file
-    return res.status(error.status).json({ error: error.message });
+  if (!doc || doc.owner_id !== req.user.id) {
+    return refuseUpload(req, res, 404, 'Document not found');
+  }
+  if (doc.status !== 'Rejected') {
+    return refuseUpload(req, res, 409, 'Only rejected documents can be resubmitted');
+  }
+  if (!req.file) {
+    return refuseUpload(req, res, 400, 'Please choose the corrected file');
   }
 
   const note = (req.body.note || '').trim();
@@ -201,34 +217,39 @@ router.post('/:id/resubmit', requireRole('Engineer'), upload.single('file'), (re
 
 // ---------- approve / reject (Manager only) ----------
 
-function decide(newStatus) {
-  return (req, res) => {
-    const doc = findDocument(req.params.id);
-    if (!doc) {
-      return res.status(404).json({ error: 'Document not found' });
-    }
-    if (doc.status !== 'Pending Approval') {
-      return res.status(409).json({ error: `This document is already ${doc.status.toLowerCase()}` });
-    }
+router.post('/:id/approve', requireRole('Manager'), (req, res) => {
+  const doc = findDocument(req.params.id);
+  if (!doc) {
+    return res.status(404).json({ error: 'Document not found' });
+  }
+  if (doc.status !== 'Pending Approval') {
+    return res.status(409).json({ error: `This document is already ${doc.status.toLowerCase()}` });
+  }
 
-    const comment = (req.body.comment || '').trim();
-    if (newStatus === 'Rejected' && !comment) {
-      return res.status(400).json({ error: 'A comment is required when rejecting' });
-    }
+  setStatus(doc.id, 'Approved', null);
+  addHistory(doc.id, req.user.id, 'Approved');
 
-    db.prepare(`
-      UPDATE documents
-      SET status = ?, manager_comment = ?, updated_at = datetime('now')
-      WHERE id = ?
-    `).run(newStatus, comment || null, doc.id);
+  res.json({ document: findDocument(doc.id) });
+});
 
-    addHistory(doc.id, req.user.id, newStatus, comment || null);
+router.post('/:id/reject', requireRole('Manager'), (req, res) => {
+  const doc = findDocument(req.params.id);
+  if (!doc) {
+    return res.status(404).json({ error: 'Document not found' });
+  }
+  if (doc.status !== 'Pending Approval') {
+    return res.status(409).json({ error: `This document is already ${doc.status.toLowerCase()}` });
+  }
 
-    res.json({ document: findDocument(doc.id) });
-  };
-}
+  const comment = (req.body.comment || '').trim();
+  if (!comment) {
+    return res.status(400).json({ error: 'A comment is required when rejecting' });
+  }
 
-router.post('/:id/approve', requireRole('Manager'), decide('Approved'));
-router.post('/:id/reject', requireRole('Manager'), decide('Rejected'));
+  setStatus(doc.id, 'Rejected', comment);
+  addHistory(doc.id, req.user.id, 'Rejected', comment);
+
+  res.json({ document: findDocument(doc.id) });
+});
 
 export default router;
