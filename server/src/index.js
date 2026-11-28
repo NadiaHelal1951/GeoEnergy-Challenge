@@ -4,8 +4,8 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import './db.js'; // opens the database and seeds users on first run
-import loginRoutes from './routes/login.js';
-import documentRoutes from './routes/documents.js';
+import loginRouter from './routers/login.js';
+import documentRouter from './routers/documents.js';
 import { requireAuth } from './middleware/checkAccess.js';
 import { DEPARTMENTS, DOC_TYPES, STATUSES } from './constants.js';
 
@@ -20,7 +20,7 @@ app.use(express.json()); // lets us read JSON bodies as req.body
 // ---------- API ----------
 
 // Login must come BEFORE requireAuth: you can't have a token yet when you're logging in.
-app.use('/api/auth', loginRoutes);
+app.use('/api/auth', loginRouter);
 
 // Everything below requires a valid login token.
 app.use('/api', requireAuth);
@@ -34,7 +34,7 @@ app.get('/api/options', (req, res) => {
   res.json({ departments: DEPARTMENTS, docTypes: DOC_TYPES, statuses: STATUSES });
 });
 
-app.use('/api/documents', documentRoutes);
+app.use('/api/documents', documentRouter);
 
 // Any other /api address doesn't exist.
 app.use('/api', (req, res) => {

@@ -116,7 +116,7 @@ GeoEnergy-Challenge/
 │   │   ├── upload.js         multer configuration (where and how files are saved)
 │   │   ├── middleware/
 │   │   │   └── checkAccess.js  requireAuth (valid token) and requireRole (Engineer/Manager)
-│   │   └── routes/
+│   │   └── routers/
 │   │       ├── login.js      POST /api/auth/login
 │   │       └── documents.js  list, status counts, upload, file, history, resubmit, approve, reject
 │   ├── data.db               the database (created on first run, not in git)
