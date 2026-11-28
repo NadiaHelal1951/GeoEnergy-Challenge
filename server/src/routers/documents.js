@@ -144,9 +144,12 @@ router.post('/', requireRole('Engineer'), upload.single('file'), (req, res) => {
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `).run(title.trim(), department, doc_type, req.file.originalname, req.file.filename, req.file.mimetype, req.user.id);
 
-  addHistory(result.lastInsertRowid, req.user.id, 'Submitted');
+  // SQLite chose the new document's id; better-sqlite3 returns it as lastInsertRowid.
+  const documentId = result.lastInsertRowid;
 
-  res.status(201).json({ document: findDocument(result.lastInsertRowid) });
+  addHistory(documentId, req.user.id, 'Submitted');
+
+  res.status(201).json({ document: findDocument(documentId) });
 });
 
 // ---------- view file ----------
